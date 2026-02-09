@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
@@ -10,6 +10,7 @@ import { LoadingBar } from './components/LoadingBar';
 import { ResultCard } from './components/ResultCard';
 import { analyzeMBTI, MBTIResult } from './utils/gemini';
 import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText, formatBookmarksToText } from './utils/bookmarks';
+import { FloatingNav } from './components/FloatingNav';
 import './i18n';
 
 // Assets
@@ -25,6 +26,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<MBTIResult | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  if (result && resultRef.current) {
+    resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+     setTimeout(() => {
+      window.scrollBy(0, -30); // 向上滾動 10 像素以作為偏移
+    }, 500); // 5
+  }
+}, [result]);
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -112,6 +123,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans selection:bg-cyan-500/30 selection:text-cyan-200 pt-8 pb-12 px-4 flex flex-col items-center relative overflow-x-auto">
       <Toaster richColors theme="dark" />
+      <FloatingNav />
       {/* Background Image - Reduced overlay opacity to make background more visible (Bug 1 Fix) */}
       <div className="absolute inset-0 z-0">
         <img 
@@ -224,10 +236,11 @@ function App() {
         <AnimatePresence>
           {result && (
             <motion.div
+              ref={resultRef}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="mt-6"
+              className="mt-10 w-full"
             >
               <ResultCard 
                 result={result} 

@@ -20,9 +20,13 @@ const resources = {
       "footerAuth": "MIT License",
       "bookmarkApiError": "Could not access bookmarks API. Make sure you are running this in a Chrome extension.",
       "downloadBookmarks": "Download Bookmarks",
+      "favoriteThing": "What is your favorite thing?",
+      "unhideKeyInfo": "Show Details",
+      "hideKeyInfo": "Hide Details",
+      "jumpToTop": "Jump to Top",
+      "jumpToBottom": "Jump to Bottom",
       "couple": "Which person is right for you?",
       "whoYouAre": "What kind of person you are?",
-      "favoriteThing":"What is your favorite thing?",
       "food":"food",
       "clothing":"clothing",
       "housing":"housing",
@@ -31,9 +35,7 @@ const resources = {
       "entertainment":"entertainment",
       "money":"money",
       "sex":"sex",
-      "pornstar":"pornstar",
-      "unhideKeyInfo": "Show Details",
-      "hideKeyInfo": "Hide Details"
+      "pornstar":"pornstar"
     }
   },
   zh: {
@@ -54,9 +56,13 @@ const resources = {
       "footerAuth": "MIT License",
       "bookmarkApiError": "无法访问书签 API。请确保您在 Chrome 扩展程序中运行。",
       "downloadBookmarks": "下載書籤",
-      "couple": "適合你的伴侶特質?",
-      "whoYouAre": "你是一個怎麼樣的人?",
-      "favoriteThing":"你最喜歡的東西是什麼？",
+      "favoriteThing": "你最喜歡的東西是什麼?",
+      "unhideKeyInfo": "不隱藏",
+      "hideKeyInfo": "隱藏關鍵訊息",
+      "jumpToTop": "回到頂部",
+      "jumpToBottom": "跳至底部",
+      "couple": "適合你的伴侶?",
+      "whoYouAre": "你是一位怎麼樣的人?",
       "food":"食",
       "clothing":"衣",
       "housing":"住",
@@ -65,9 +71,7 @@ const resources = {
       "entertainment":"樂",
       "money":"錢",
       "sex":"性",
-      "pornstar":"成人影星",
-      "unhideKeyInfo": "不隱藏關鍵訊息",
-      "hideKeyInfo": "隱藏關鍵訊息"
+      "pornstar":"成人影星"
     }
   }
 };
