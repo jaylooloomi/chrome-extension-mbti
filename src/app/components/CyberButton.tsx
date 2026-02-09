@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface CyberButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'blue' | 'green' | 'orange' | 'purple' | 'red';
+  variant?: 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'outline';
   fullWidth?: boolean;
 }
 
@@ -14,6 +14,7 @@ const variants = {
   orange: "bg-orange-600 hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.5)] border-orange-400",
   purple: "bg-purple-600 hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.5)] border-purple-400",
   red: "bg-red-600 hover:bg-red-500 shadow-[0_0_15px_rgba(220,38,38,0.5)] border-red-400",
+  outline: "bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-900/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]",
 };
 
 export const CyberButton: React.FC<CyberButtonProps> = ({ 

@@ -17,7 +17,9 @@ const resources = {
       "traits": "Core Traits",
       "retest": "Analyze Again",
       "toggleLang": "中文",
-      "footerAuth": "MIT License"
+      "footerAuth": "MIT License",
+      "bookmarkApiError": "Could not access bookmarks API. Make sure you are running this in a Chrome extension.",
+      "downloadBookmarks": "Download Bookmarks"
     }
   },
   zh: {
@@ -28,14 +30,16 @@ const resources = {
       "aiButton": "測驗開始",
       "privacy": "注意：您的資料僅供本機使用及傳送至 Gemini 進行分析，本應用程式不會儲存您的 API Key 或個人資訊。",
       "analyzing": "正在分析神經網路模式...",
-      "downloading": "正在下載記憶樹...",
+      "downloading": "正在讀取記憶樹...",
       "resultTitle": "分析完成",
       "unknown": "未知",
       "mbtiType": "人格類型",
       "traits": "核心特質",
       "retest": "重新分析",
       "toggleLang": "English",
-      "footerAuth": "MIT License"
+      "footerAuth": "MIT License",
+      "bookmarkApiError": "无法访问书签 API。请确保您在 Chrome 扩展程序中运行。",
+      "downloadBookmarks": "下載書籤"
     }
   }
 };

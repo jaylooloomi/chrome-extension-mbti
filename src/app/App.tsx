@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { Toaster } from 'sonner';
-import { Bot, Key, ExternalLink, Globe, Shield } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+import { Bot, Key, ExternalLink, Globe, Shield, Download } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from './components/ui/radio-group';
 import { Label } from './components/ui/label';
 import { CyberButton } from './components/CyberButton';
 import { LoadingBar } from './components/LoadingBar';
 import { ResultCard } from './components/ResultCard';
 import { analyzeMBTI, MBTIResult } from './utils/gemini';
-import { generateMockBookmarks, downloadBookmarks } from './utils/bookmarks';
+import { generateMockBookmarks, downloadBookmarks, cleanBookmarkNode } from './utils/bookmarks';
 import './i18n';
 
 // Assets
@@ -25,7 +25,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<MBTIResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -45,22 +44,47 @@ function App() {
     return interval;
   };
 
+  const getBookmarks = (t: (key: string) => string): Promise<chrome.bookmarks.BookmarkTreeNode[]> => {
+    return new Promise((resolve, reject) => {
+      if (chrome && chrome.bookmarks) {
+        chrome.bookmarks.getTree((bookmarkTreeNodes) => {
+          if (chrome.runtime.lastError) {
+            console.error("Error getting bookmarks:", chrome.runtime.lastError);
+            reject(new Error(t('bookmarkApiError')));
+          } else {
+            resolve(bookmarkTreeNodes);
+          }
+        });
+      } else {
+        console.error("chrome.bookmarks API is not available.");
+        reject(new Error(t('bookmarkApiError')));
+      }
+    });
+  };
+
+  const handleDownloadBookmarks = async () => {
+    try {
+      const bookmarks = await getBookmarks(t);
+      downloadBookmarks(bookmarks);
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred while fetching bookmarks.");
+    }
+  };
+
   const handleAnalysis = async () => {
     if (!apiKey) {
-      setError(t('Please enter a valid Gemini API Key'));
+      toast.error(t('Please enter a valid Gemini API Key'));
       return;
     }
-    setError(null);
     setIsLoading(true);
     setResult(null);
     
     const progressInterval = simulateProgress();
 
     try {
-      const bookmarks = generateMockBookmarks();
-      downloadBookmarks(bookmarks);
-
-      const analysisResult = await analyzeMBTI(apiKey, bookmarks, i18n.language);
+      const bookmarks = await getBookmarks(t);
+      const cleanedBookmarks = bookmarks.map(cleanBookmarkNode);
+      const analysisResult = await analyzeMBTI(apiKey, cleanedBookmarks, i18n.language);
       
       setProgress(100);
       setTimeout(() => {
@@ -70,7 +94,7 @@ function App() {
       }, 800);
 
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      toast.error(err.message || "An error occurred");
       setIsLoading(false);
       clearInterval(progressInterval);
     }
@@ -95,7 +119,12 @@ function App() {
         className="w-full max-w-2xl bg-white-900/80 border border-white-700/50 backdrop-blur-xl rounded-2xl p-8 shadow-2xl relative z-10"
       >
         {/* Header */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <CyberButton onClick={handleDownloadBookmarks} variant="outline" className="text-sm">
+            <Download className="w-4 h-4" />
+            {t('downloadBookmarks')}
+          </CyberButton>
+
           <RadioGroup
             value={i18n.language.split('-')[0]}
             onValueChange={handleLanguageChange}
@@ -147,7 +176,6 @@ function App() {
               {t('getKey')} <ExternalLink className="w-3 h-3 ml-1" />
             </a>
           </div>
-          {error && <p className="text-red-400 text-sm mt-1 ml-1">{error}</p>}
         </div>
 
         {/* Banner Image */}

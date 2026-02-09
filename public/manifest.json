@@ -8,7 +8,8 @@
     "default_title": "Open MBTI Test"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "bookmarks"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*"
