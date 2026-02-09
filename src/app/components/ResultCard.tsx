@@ -152,7 +152,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
             >
                <div className="absolute inset-0 border border-purple-500/50 rounded-lg group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all"></div>
                <span className="text-purple-300 group-hover:text-purple-200 flex items-center gap-2">
-                  &lt; {t('retest')} /&gt;
+                  &lt; {t('retest')} &gt;
                </span>
             </button>
             <button 
