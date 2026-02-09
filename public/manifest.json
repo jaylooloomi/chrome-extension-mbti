@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "MBTI Personality Test",
+  "version": "1.0",
+  "description": "AI-powered MBTI personality assessment extension",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Open MBTI Test"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ]
+}

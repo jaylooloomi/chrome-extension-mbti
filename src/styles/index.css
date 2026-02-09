@@ -1,0 +1,21 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Force Extension Width & Height */
+body {
+  width: 450px;
+  height: 600px; /* Chrome Max Height */
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Hide scrollbar */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
