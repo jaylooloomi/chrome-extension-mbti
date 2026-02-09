@@ -31,7 +31,9 @@ const resources = {
       "entertainment":"entertainment",
       "money":"money",
       "sex":"sex",
-      "pornstar":"pornstar"
+      "pornstar":"pornstar",
+      "unhideKeyInfo": "Show Details",
+      "hideKeyInfo": "Hide Details"
     }
   },
   zh: {
@@ -63,7 +65,9 @@ const resources = {
       "entertainment":"樂",
       "money":"錢",
       "sex":"性",
-      "pornstar":"成人影星"
+      "pornstar":"成人影星",
+      "unhideKeyInfo": "不隱藏關鍵訊息",
+      "hideKeyInfo": "隱藏關鍵訊息"
     }
   }
 };

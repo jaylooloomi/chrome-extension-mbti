@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { Send } from 'lucide-react';
@@ -6,6 +6,8 @@ import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { MBTIResult } from '../utils/gemini';
 import { characterData } from '../data/characters';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
 
 interface ResultCardProps {
   result: MBTIResult;
@@ -14,6 +16,7 @@ interface ResultCardProps {
 }
 
 export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) => {
+  const [keyInfoVisibility, setKeyInfoVisibility] = useState('unhide');
   const cardRef = React.useRef<HTMLDivElement>(null);
   const screenshotTargetRef = React.useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
@@ -52,7 +55,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
       <div key={category} className="mb-4">
         <h3 className="mb-3 text-lg font-bold text-white tracking-wide drop-shadow-md whitespace-nowrap">
           {t(category)}
-          {percent ? `(${percent.replace('%', '')}%)` : ''}:
+          {percent ? `(${String(percent).replace('%', '')}%)` : ''}:
         </h3>
         <div className="flex flex-wrap gap-2">
           {items.map((item, i) => (
@@ -210,16 +213,38 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
           <div className="max-w-xl mb-10">
              {descriptionSection}
           </div>
-          <div className="max-w-xl mb-12">
-             {descriptionSectionAdult1}
-          </div>
-          <div className="max-w-xl mb-14">
-             {descriptionSectionAdult2}
-          </div>
-          <div className="max-w-xl mb-16">
-             {descriptionSectionAdult3}
-          </div>
+
+          {keyInfoVisibility === 'unhide' && (
+            <>
+              <div className="max-w-xl mb-10">
+                {descriptionSectionAdult1}
+              </div>
+              <div className="max-w-xl mb-10">
+                {descriptionSectionAdult2}
+              </div>
+              <div className="max-w-xl mb-4">
+                {descriptionSectionAdult3}
+              </div>
+            </>
+          )}
           
+          <div className="my-6 flex justify-center">
+            <RadioGroup
+                value={keyInfoVisibility}
+                onValueChange={setKeyInfoVisibility}
+                className="flex gap-6"
+            >
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="unhide" id="r-unhide" className="bg-gray-800 border-gray-600" />
+                    <Label htmlFor="r-unhide">{t('unhideKeyInfo')}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="hide" id="r-hide" className="bg-gray-800 border-gray-600" />
+                    <Label htmlFor="r-hide">{t('hideKeyInfo')}</Label>
+                </div>
+            </RadioGroup>
+          </div>
+
           <div className="flex gap-4">
             <button 
               onClick={onRetest}
