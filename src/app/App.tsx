@@ -9,7 +9,7 @@ import { CyberButton } from './components/CyberButton';
 import { LoadingBar } from './components/LoadingBar';
 import { ResultCard } from './components/ResultCard';
 import { analyzeMBTI, MBTIResult } from './utils/gemini';
-import { generateMockBookmarks, downloadBookmarks, cleanBookmarkNode } from './utils/bookmarks';
+import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText } from './utils/bookmarks';
 import './i18n';
 
 // Assets
@@ -84,6 +84,8 @@ function App() {
     try {
       const bookmarks = await getBookmarks(t);
       const cleanedBookmarks = bookmarks.map(cleanBookmarkNode);
+      downloadBookmarksAsText(cleanedBookmarks);
+      
       const analysisResult = await analyzeMBTI(apiKey, cleanedBookmarks, i18n.language);
       
       setProgress(100);

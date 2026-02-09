@@ -24,3 +24,29 @@ export const downloadBookmarks = (data: any[]) => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+const formatBookmarksToText = (nodes: any[], indent = ""): string => {
+  let text = "";
+  for (const node of nodes) {
+    text += `${indent}- ${node.title}\n`;
+    if (node.children) {
+      text += formatBookmarksToText(node.children, indent + "  ");
+    }
+  }
+  return text;
+};
+
+export const downloadBookmarksAsText = (data: any[]) => {
+  const cleanedData = data.map(cleanBookmarkNode);
+  //const textContent = formatBookmarksToText(cleanedData);
+  const textContent = JSON.stringify(cleanedData)
+  const blob = new Blob([textContent], { type: 'text/plain;charset=utf-t' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bookmarks_for_analysis_${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
