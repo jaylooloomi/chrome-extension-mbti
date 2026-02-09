@@ -9,7 +9,7 @@ import { CyberButton } from './components/CyberButton';
 import { LoadingBar } from './components/LoadingBar';
 import { ResultCard } from './components/ResultCard';
 import { analyzeMBTI, MBTIResult } from './utils/gemini';
-import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText } from './utils/bookmarks';
+import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText, formatBookmarksToText } from './utils/bookmarks';
 import './i18n';
 
 // Assets
@@ -84,8 +84,15 @@ function App() {
     try {
       const bookmarks = await getBookmarks(t);
       const cleanedBookmarks = bookmarks.map(cleanBookmarkNode);
-      downloadBookmarksAsText(cleanedBookmarks);
+
+      // Create text version for download
+      //const bookmarksText = formatBookmarksToText(bookmarks);
       
+      // Trigger the download of the text file
+      //const filename = downloadBookmarksAsText(bookmarksText);
+      //console.log(`Bookmarks for analysis saved to: ${filename} (in your Downloads folder)`);
+      
+      // Pass the cleaned JSON object to the analysis function
       const analysisResult = await analyzeMBTI(apiKey, cleanedBookmarks, i18n.language);
       
       setProgress(100);
@@ -121,8 +128,8 @@ function App() {
         className="w-full max-w-2xl bg-white-900/80 border border-white-700/50 backdrop-blur-xl rounded-2xl p-8 shadow-2xl relative z-10"
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <CyberButton onClick={handleDownloadBookmarks} variant="outline" className="text-sm">
+        <div className="flex justify-end items-center mb-4">
+          <CyberButton onClick={handleDownloadBookmarks} variant="outline" className="text-sm hidden">
             <Download className="w-4 h-4" />
             {t('downloadBookmarks')}
           </CyberButton>

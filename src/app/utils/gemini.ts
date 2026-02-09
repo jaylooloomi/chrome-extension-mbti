@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { logger } from "./logger";
 
 export interface MBTIResult {
   mbti: string;
@@ -16,13 +17,11 @@ export const analyzeMBTI = async (apiKey: string, bookmarkStructure: any, langua
     
     const prompt = `
       You are a psychological expert specializing in digital footprints. 
-      Analyze the following browser bookmark directory structure and determine the user's likely MBTI personality type.
+      Analyze the following browser bookmark directory structure and website names and determine the user's likely MBTI personality type.
       
-      Bookmark Structure:
-      ${JSON.stringify(bookmarkStructure).substring(0, 10000)} 
+      Bookmark StructureName And WebsiteName:
+      ${JSON.stringify(bookmarkStructure)} 
       
-      (Note: The structure is truncated if too long, but use what is available to infer interests, organization style, and priorities.)
-
       Return ONLY a raw JSON object (no markdown formatting, no code blocks) with the following keys:
       - "mbti": The 4-letter MBTI code (e.g., INTJ, ENFP).
       - "title": A cool, cyberpunk-themed title for this persona (e.g., "The Neon Architect", "The Void Navigator").
@@ -31,17 +30,18 @@ export const analyzeMBTI = async (apiKey: string, bookmarkStructure: any, langua
 
       Language for response: ${langPrompt}
     `;
-
+    logger.debug("bookmarkStructure:",JSON.stringify(bookmarkStructure))
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+    logger.debug("response:",text)
+
     // Clean up if Gemini wraps in markdown code blocks
     const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     return JSON.parse(cleanText) as MBTIResult;
   } catch (error) {
-    console.error("Gemini Analysis Error:", error);
+    logger.error("Gemini Analysis Error:", error);
     throw new Error("Failed to analyze MBTI. Please check your API Key.");
   }
 };
