@@ -22,6 +22,7 @@ const resources = {
       "downloadBookmarks": "Download Bookmarks",
       "couple": "Which person is right for you?",
       "whoYouAre": "What kind of person you are?",
+      "favoriteThing":"What is your favorite thing?",
       "food":"food",
       "clothing":"clothing",
       "housing":"housing",
@@ -30,6 +31,7 @@ const resources = {
       "entertainment":"entertainment",
       "money":"money",
       "sex":"sex",
+      "pornstar":"pornstar"
     }
   },
   zh: {
@@ -50,8 +52,9 @@ const resources = {
       "footerAuth": "MIT License",
       "bookmarkApiError": "无法访问书签 API。请确保您在 Chrome 扩展程序中运行。",
       "downloadBookmarks": "下載書籤",
-      "couple": "適合你的伴侶?",
-      "whoYouAre": "你是一位怎麼樣的人?",
+      "couple": "適合你的伴侶特質?",
+      "whoYouAre": "你是一個怎麼樣的人?",
+      "favoriteThing":"你最喜歡的東西是什麼？",
       "food":"食",
       "clothing":"衣",
       "housing":"住",
@@ -60,6 +63,7 @@ const resources = {
       "entertainment":"樂",
       "money":"錢",
       "sex":"性",
+      "pornstar":"成人影星"
     }
   }
 };

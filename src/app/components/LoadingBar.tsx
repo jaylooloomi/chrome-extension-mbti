@@ -16,7 +16,7 @@ export const LoadingBar: React.FC<LoadingBarProps> = ({ progress }) => {
         transition={{ duration: 0.5 }}
       />
       <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white font-bold tracking-widest mix-blend-difference">
-        LOADING {progress}%
+        LOADING {Math.round(progress)}%
       </div>
     </div>
   );

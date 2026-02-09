@@ -44,41 +44,68 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
     </div>
   );
 
+  const renderCategorySection = (category: string, percent: string, items: string[]) => {
+    // If there are no items for a category, don't render anything for it.
+    if (!items || items.length === 0) return null;
+
+    return (
+      <div key={category} className="mb-4">
+        <h3 className="mb-3 text-lg font-bold text-white tracking-wide drop-shadow-md whitespace-nowrap">
+          {t(category)}
+          {percent ? `(${percent.replace('%', '')}%)` : ''}:
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {items.map((item, i) => (
+            <span key={i} className="bg-gray-800/81 text-gray-200 text-xs px-3 py-1 rounded-full shadow-sm hover:text-cyan-300 transition-colors cursor-default">
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const descriptionSectionAdult1 = (
-    <div className="space-y-6">
-      {character && (
-         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-            "{character.description[lang] || character.description.en}"
-         </p>
-      )}
-      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
-        {result.description}
+    <div className="w-full space-y-6 text-left">
+      <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+        "{t('favoriteThing')}"
       </p>
+      <div>
+        {renderCategorySection('food', result.foodpercent, result.food)}
+        {renderCategorySection('clothing', result.clothingpercent, result.clothing)}
+        {renderCategorySection('housing', result.housingpercent, result.housing)}
+        {renderCategorySection('travel', result.travelpercent, result.travel)}
+        {renderCategorySection('education', result.educationpercent, result.education)}
+        {renderCategorySection('entertainment', result.entertainmentpercent, result.entertainment)}
+        {renderCategorySection('money', result.moneypercent, result.money)}
+        {renderCategorySection('sex', result.sexpercent, result.sex)}
+        {renderCategorySection('pornstar', result.pornstarpercent, result.pornstar)}
+      </div>
     </div>
   );
 
   const descriptionSectionAdult2 = (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {character && (
-         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-            "{character.description[lang] || character.description.en}"
-         </p>
+        <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+        "{t('whoYouAre')}"
+      </p>
       )}
-      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
-        {result.description}
+      <p className="text-gray-300/94 leading-loose font-light text-justify text-base">
+        {result.yourself}
       </p>
     </div>
   );
 
   const descriptionSectionAdult3 = (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {character && (
-         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-            "{character.description[lang] || character.description.en}"
-         </p>
+         <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+        "{t('couple')}"
+      </p>
       )}
-      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
-        {result.description}
+      <p className="text-gray-300/96 leading-loose font-light text-justify text-base">
+        {result.couple}
       </p>
     </div>
   );
