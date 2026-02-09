@@ -19,7 +19,17 @@ const resources = {
       "toggleLang": "中文",
       "footerAuth": "MIT License",
       "bookmarkApiError": "Could not access bookmarks API. Make sure you are running this in a Chrome extension.",
-      "downloadBookmarks": "Download Bookmarks"
+      "downloadBookmarks": "Download Bookmarks",
+      "couple": "Which person is right for you?",
+      "whoYouAre": "What kind of person you are?",
+      "food":"food",
+      "clothing":"clothing",
+      "housing":"housing",
+      "travel":"travel",
+      "education":"education",
+      "entertainment":"entertainment",
+      "money":"money",
+      "sex":"sex",
     }
   },
   zh: {
@@ -39,7 +49,17 @@ const resources = {
       "toggleLang": "English",
       "footerAuth": "MIT License",
       "bookmarkApiError": "无法访问书签 API。请确保您在 Chrome 扩展程序中运行。",
-      "downloadBookmarks": "下載書籤"
+      "downloadBookmarks": "下載書籤",
+      "couple": "適合你的伴侶?",
+      "whoYouAre": "你是一位怎麼樣的人?",
+      "food":"食",
+      "clothing":"衣",
+      "housing":"住",
+      "travel":"行",
+      "education":"育",
+      "entertainment":"樂",
+      "money":"錢",
+      "sex":"性",
     }
   }
 };

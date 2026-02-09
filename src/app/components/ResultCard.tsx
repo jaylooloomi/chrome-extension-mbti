@@ -44,6 +44,45 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
     </div>
   );
 
+  const descriptionSectionAdult1 = (
+    <div className="space-y-6">
+      {character && (
+         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+            "{character.description[lang] || character.description.en}"
+         </p>
+      )}
+      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
+        {result.description}
+      </p>
+    </div>
+  );
+
+  const descriptionSectionAdult2 = (
+    <div className="space-y-6">
+      {character && (
+         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+            "{character.description[lang] || character.description.en}"
+         </p>
+      )}
+      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
+        {result.description}
+      </p>
+    </div>
+  );
+
+  const descriptionSectionAdult3 = (
+    <div className="space-y-6">
+      {character && (
+         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
+            "{character.description[lang] || character.description.en}"
+         </p>
+      )}
+      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
+        {result.description}
+      </p>
+    </div>
+  );
+
   const handleShare = async () => {
     if (!cardRef.current || !screenshotTargetRef.current) {
       return;
@@ -143,6 +182,15 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
           {/* Description */}
           <div className="max-w-xl mb-10">
              {descriptionSection}
+          </div>
+          <div className="max-w-xl mb-12">
+             {descriptionSectionAdult1}
+          </div>
+          <div className="max-w-xl mb-14">
+             {descriptionSectionAdult2}
+          </div>
+          <div className="max-w-xl mb-16">
+             {descriptionSectionAdult3}
           </div>
           
           <div className="flex gap-4">
