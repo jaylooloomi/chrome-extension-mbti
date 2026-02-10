@@ -17,7 +17,7 @@ const resources = {
       "traits": "Core Traits",
       "retest": "Retest",
       "toggleLang": "中文",
-      "footerAuth": "MIT License",
+      "footerAuth": "MIT License | Version 1.0 | Author: Arthur Wang",
       "bookmarkApiError": "Could not access bookmarks API. Make sure you are running this in a Chrome extension.",
       "downloadBookmarks": "Download Bookmarks",
       "favoriteThing": "What is your favorite thing?",
@@ -35,7 +35,9 @@ const resources = {
       "entertainment":"entertainment",
       "money":"money",
       "sex":"sex",
-      "pornstar":"pornstar"
+      "pornstar":"pornstar",
+      "tooltipApiKey": "For personal use only; the system will not save this information!",
+      "copysuccess":"Image copied to clipboard!"
     }
   },
   zh: {
@@ -53,7 +55,7 @@ const resources = {
       "traits": "核心特質",
       "retest": "重新分析",
       "toggleLang": "English",
-      "footerAuth": "MIT License",
+      "footerAuth": "MIT License | Version 1.0 | 作者: Arthur Wang",
       "bookmarkApiError": "无法访问书签 API。请确保您在 Chrome 扩展程序中运行。",
       "downloadBookmarks": "下載書籤",
       "favoriteThing": "你最喜歡的東西是什麼?",
@@ -71,7 +73,9 @@ const resources = {
       "entertainment":"樂",
       "money":"錢",
       "sex":"性",
-      "pornstar":"成人影星"
+      "pornstar":"成人影星",
+      "tooltipApiKey": "僅供使用者個人使用, 系統將不會保存!",
+      "copysuccess":"圖片已複製到剪貼簿！"
     }
   }
 };

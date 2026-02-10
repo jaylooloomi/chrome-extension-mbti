@@ -138,7 +138,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) =
         }),
       ]);
 
-      toast.success('Image copied to clipboard!');
+      toast.success(t('copysuccess'));
 
     } catch (error) {
       console.error('Error capturing or copying image:', error);

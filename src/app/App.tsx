@@ -177,7 +177,7 @@ function App() {
           <label className="block text-sm font-medium text-gray-300 ml-1">
             {t('apiKeyLabel')}
           </label>
-          <div className="relative group">
+          <div className="relative group" onClick={() => toast.success(t('tooltipApiKey'))}>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Key className="h-5 w-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
             </div>
