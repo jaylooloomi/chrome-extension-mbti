@@ -11,6 +11,7 @@ import { ResultCard } from './components/ResultCard';
 import { analyzeMBTI, MBTIResult } from './utils/gemini';
 import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText, formatBookmarksToText } from './utils/bookmarks';
 import { FloatingNav } from './components/FloatingNav';
+import { DonationModal } from './DonationModal';
 import './i18n';
 
 // Assets
@@ -26,6 +27,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<MBTIResult | null>(null);
+  const [showDonationModal, setShowDonationModal] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -217,6 +219,12 @@ function App() {
             <CyberButton onClick={handleAnalysis} variant="blue" fullWidth className="py-4 text-lg shadow-[0_0_20px_rgba(37,99,235,0.3)]">
               <Bot className="w-6 h-6" /> {t('aiButton')}
             </CyberButton>
+                <button
+                  onClick={() => setShowDonationModal(true)}
+                  className="mt-4 text-gray-500 hover:text-cyan-400 text-xs flex items-center gap-1 transition-colors"
+                >
+                  TESTBTN
+                </button>
           </div>
         )}
 
@@ -261,6 +269,15 @@ function App() {
            {t('footerAuth')}
         </div>
       </motion.div>
+
+      <DonationModal 
+        isOpen={showDonationModal} 
+        onClose={() => setShowDonationModal(false)} 
+        onDonate={() => {
+          console.log('Donation initiated!');
+          setShowDonationModal(false);
+        }}
+      />
     </div>
   );
 }
