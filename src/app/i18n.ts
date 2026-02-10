@@ -39,7 +39,11 @@ const resources = {
       "sex":"sex",
       "pornstar":"pornstar",
       "tooltipApiKey": "For personal use only; the system will not save this information!",
-      "copysuccess":"Image copied to clipboard!"
+      "copysuccess":"Image copied to clipboard!",
+      "likeThisTool": "Do you like this tool?",
+      "sponsorCoffee": "Sponsor a coffee ☕",
+      "coffeeicon": "☕",
+      "skipAndStartAnalysis": "Skip and Start Analysis",
     }
   },
   zh: {
@@ -79,10 +83,14 @@ const resources = {
       "sex":"性",
       "pornstar":"成人影星",
       "tooltipApiKey": "僅供使用者個人使用, 系統將不會保存!",
-      "copysuccess":"圖片已複製到剪貼簿！"
+      "copysuccess":"圖片已複製到剪貼簿！",
+      "likeThisTool": "喜歡這個工具嗎？",
+      "sponsorCoffee": "贊助一杯咖啡 ☕",
+      "coffeeicon": "☕",
+      "skipAndStartAnalysis": "跳過並開始分析",
     }
   }
-};
+}
 
 i18n
   .use(initReactI18next)

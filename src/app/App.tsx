@@ -219,12 +219,6 @@ function App() {
             <CyberButton onClick={handleAnalysis} variant="blue" fullWidth className="py-4 text-lg shadow-[0_0_20px_rgba(37,99,235,0.3)]">
               <Bot className="w-6 h-6" /> {t('aiButton')}
             </CyberButton>
-                <button
-                  onClick={() => setShowDonationModal(true)}
-                  className="mt-4 text-gray-500 hover:text-cyan-400 text-xs flex items-center gap-1 transition-colors"
-                >
-                  TESTBTN
-                </button>
           </div>
         )}
 
@@ -266,7 +260,13 @@ function App() {
         </div>
         
         <div className="mt-4 text-center text-gray-500 text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity">
-           {t('footerAuth')}
+          {t('footerAuth')}
+          <a className="mt-2">  </a>
+          <button 
+          onClick={() => setShowDonationModal(true)} 
+          className="text-center text-white-500 text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity"> 
+          {t('coffeeicon')} 
+          </button>
         </div>
       </motion.div>
 
@@ -275,6 +275,7 @@ function App() {
         onClose={() => setShowDonationModal(false)} 
         onDonate={() => {
           console.log('Donation initiated!');
+          window.open('https://buymeacoffee.com/arthurwang', '_blank');
           setShowDonationModal(false);
         }}
       />

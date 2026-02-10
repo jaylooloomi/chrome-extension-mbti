@@ -58,7 +58,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose, o
                 {/* Requested Footer Content */}
                 <div className="w-full pt-4 mt-2 border-t border-gray-800">
                   <div className="flex flex-col items-center space-y-3">
-                    <p className="text-cyan-400 font-mono text-sm">喜歡這個工具嗎？</p>
+                    <p className="text-cyan-400 font-mono text-sm">{t('likeThisTool')}</p>
                     
                     <button 
                       id="donate-btn"
@@ -66,7 +66,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose, o
                       className="group relative flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg text-white font-bold tracking-wide shadow-lg hover:shadow-orange-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                     >
                       <Coffee className="w-5 h-5" />
-                      <span>贊助一杯咖啡 ☕</span>
+                        <span>{t('sponsorCoffee')}</span>
                       <div className="absolute inset-0 rounded-lg bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -76,7 +76,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose, o
                   onClick={onClose}
                   className="mt-4 text-gray-500 hover:text-cyan-400 text-xs flex items-center gap-1 transition-colors"
                 >
-                  Skip & Start Analysis <ArrowRight className="w-3 h-3" />
+                  {t('skipAndStartAnalysis')} <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
