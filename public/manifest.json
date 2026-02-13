@@ -14,9 +14,13 @@
     "128": "icons/icon-Photoroom.png"
   },
   "permissions": [
-    "bookmarks"
+    "bookmarks",
+    "storage"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*"
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+  }
 }
