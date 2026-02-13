@@ -1,9 +1,16 @@
 // Mock data for demo purposes since we cannot access chrome.bookmarks in iframe
 
-export const cleanBookmarkNode = (node: any) => {
-  const cleanedNode: { title: string, children?: any[] } = {
+import { applyBookmarkFilter, type BookmarkNode } from './bookmarkFilter';
+
+export const cleanBookmarkNode = (node: any): BookmarkNode => {
+  const cleanedNode: BookmarkNode = {
+    id: node.id || crypto.randomUUID(), // Ensure every node has an ID
     title: node.title,
   };
+
+  if (node.url) {
+    cleanedNode.url = node.url;
+  }
 
   if (node.children && node.children.length > 0) {
     cleanedNode.children = node.children.map(cleanBookmarkNode);
@@ -13,7 +20,7 @@ export const cleanBookmarkNode = (node: any) => {
 };
 
 // This recursive function formats the nested bookmark structure into an indented text string.
-const formatBookmarksToTextRecursive = (nodes: any[], indent = ""): string => {
+const formatBookmarksToTextRecursive = (nodes: BookmarkNode[], indent = ""): string => {
   let text = "";
   for (const node of nodes) {
     text += `${indent}- ${node.title}\n`;
@@ -24,16 +31,24 @@ const formatBookmarksToTextRecursive = (nodes: any[], indent = ""): string => {
   return text;
 };
 
-// This function cleans the raw bookmark data and then formats it into a text string.
-export const formatBookmarksToText = (data: any[]): string => {
+// This function cleans the raw bookmark data, applies filtering, and then formats it into a text string.
+export const formatBookmarksToText = async (data: any[]): Promise<string> => {
   const cleanedData = data.map(cleanBookmarkNode);
-  return formatBookmarksToTextRecursive(cleanedData);
+
+  // Apply bookmark filtering to exclude sensitive folders
+  const filteredData = await applyBookmarkFilter(cleanedData);
+
+  return formatBookmarksToTextRecursive(filteredData);
 };
 
 
-export const downloadBookmarks = (data: any[]) => {
+export const downloadBookmarks = async (data: any[]) => {
   const cleanedData = data.map(cleanBookmarkNode);
-  const blob = new Blob([JSON.stringify(cleanedData, null, 2)], { type: 'application/json' });
+
+  // Apply bookmark filtering to exclude sensitive folders
+  const filteredData = await applyBookmarkFilter(cleanedData);
+
+  const blob = new Blob([JSON.stringify(filteredData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
