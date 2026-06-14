@@ -5,29 +5,20 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 export const FloatingNav: React.FC = () => {
   const { t } = useTranslation();
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const scrollToBottom = () => {
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToBottom = () =>
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-  };
+
+  const base =
+    'flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 backdrop-blur-md transition-colors hover:border-violet-400/50 hover:text-violet-200';
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-      <button
-        onClick={scrollToTop}
-        title={t('jumpToTop')}
-        className="p-2 bg-gray-800/80 border border-cyan-500/50 rounded-full text-cyan-300 hover:bg-cyan-900/60 hover:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all"
-      >
-        <ArrowUp className="w-3.5 h-3.5" />
+    <div className="fixed bottom-3 right-3 z-50 flex flex-col gap-2">
+      <button onClick={scrollToTop} title={t('jumpToTop')} className={base}>
+        <ArrowUp className="h-3.5 w-3.5" />
       </button>
-      <button
-        onClick={scrollToBottom}
-        title={t('jumpToBottom')}
-        className="p-2 bg-gray-800/80 border border-purple-500/50 rounded-full text-purple-300 hover:bg-purple-900/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all"
-      >
-        <ArrowDown className="w-3.5 h-3.5" />
+      <button onClick={scrollToBottom} title={t('jumpToBottom')} className={base}>
+        <ArrowDown className="h-3.5 w-3.5" />
       </button>
     </div>
   );

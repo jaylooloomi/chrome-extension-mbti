@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface CyberButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -8,37 +7,37 @@ interface CyberButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   fullWidth?: boolean;
 }
 
-const variants = {
-  blue: "bg-blue-600 hover:bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.5)] border-blue-400",
-  green: "bg-green-600 hover:bg-green-500 shadow-[0_0_15px_rgba(22,163,74,0.5)] border-green-400",
-  orange: "bg-orange-600 hover:bg-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.5)] border-orange-400",
-  purple: "bg-purple-600 hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.5)] border-purple-400",
-  red: "bg-red-600 hover:bg-red-500 shadow-[0_0_15px_rgba(220,38,38,0.5)] border-red-400",
-  outline: "bg-transparent border-cyan-400 text-cyan-400 hover:bg-cyan-900/50 shadow-[0_0_15px_rgba(34,211,238,0.3)]",
+// A single, calm accent system. Legacy variant names are kept so existing
+// call sites don't break; they all resolve to the refined palette below.
+const variants: Record<NonNullable<CyberButtonProps['variant']>, string> = {
+  blue: 'text-white bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 shadow-lg shadow-violet-500/25',
+  purple: 'text-white bg-gradient-to-r from-fuchsia-500 to-violet-500 hover:from-fuchsia-400 hover:to-violet-400 shadow-lg shadow-fuchsia-500/25',
+  green: 'text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-lg shadow-emerald-500/25',
+  orange: 'text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-orange-500/25',
+  red: 'text-white bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-400 hover:to-red-400 shadow-lg shadow-rose-500/25',
+  outline: 'text-violet-200 bg-white/5 border border-white/15 hover:bg-white/10 hover:border-violet-400/50',
 };
 
-export const CyberButton: React.FC<CyberButtonProps> = ({ 
-  children, 
-  variant = 'blue', 
+export const CyberButton: React.FC<CyberButtonProps> = ({
+  children,
+  variant = 'blue',
   fullWidth = false,
   className,
-  ...props 
+  ...props
 }) => {
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.015 }}
       whileTap={{ scale: 0.98 }}
       className={twMerge(
-        "relative py-3 px-6 rounded-md font-bold text-white transition-all duration-300 border-b-4 active:border-b-0 active:translate-y-1 uppercase tracking-wider",
+        'relative inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60',
         variants[variant],
-        fullWidth ? "w-full" : "",
-        className
+        fullWidth ? 'w-full' : '',
+        className,
       )}
       {...props}
     >
-      <div className="flex items-center justify-center gap-2">
-        {children}
-      </div>
+      {children}
     </motion.button>
   );
 };

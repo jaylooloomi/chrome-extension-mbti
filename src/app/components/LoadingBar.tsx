@@ -7,17 +7,18 @@ interface LoadingBarProps {
 
 export const LoadingBar: React.FC<LoadingBarProps> = ({ progress }) => {
   return (
-    <div className="w-full h-6 bg-gray-900 rounded-full border border-gray-700 overflow-hidden relative">
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.1)_50%,transparent_100%)] animate-pulse z-10 pointer-events-none"></div>
-      <motion.div
-        className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-[0_0_10px_rgba(6,182,212,0.8)]"
-        initial={{ width: 0 }}
-        animate={{ width: `${progress}%` }}
-        transition={{ duration: 0.5 }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center text-xs font-mono text-white font-bold tracking-widest mix-blend-difference">
-        LOADING {Math.round(progress)}%
+    <div className="w-full">
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/10">
+        <motion.div
+          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500"
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+        {/* Soft moving sheen */}
+        <div className="pointer-events-none absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)]" />
       </div>
+      <div className="mt-2 text-right font-mono text-xs text-zinc-400">{Math.round(progress)}%</div>
     </div>
   );
 };

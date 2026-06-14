@@ -1,22 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "MBTI Personality Test",
-  "version": "1.0.0",
-  "description": "AI-powered MBTI personality assessment extension",
+  "name": "MBTI Hidden Self",
+  "version": "2.1.0",
+  "description": "A hidden personality test — your bookmarks reveal your MBTI type. Private on-device AI or a free key, no account.",
   "action": {
     "default_popup": "index.html",
-    "default_title": "Open MBTI Test"
+    "default_title": "Open MBTI Hidden Self"
   },
   "icons": {
-    "16": "icons/icon-Photoroom.png",
-    "32": "icons/icon-Photoroom.png",
-    "48": "icons/icon-Photoroom.png",
-    "128": "icons/icon-Photoroom.png"
+    "16": "icons/icon_radar_16.png",
+    "32": "icons/icon_radar_32.png",
+    "48": "icons/icon_radar_48.png",
+    "128": "icons/icon_radar_128.png"
   },
   "permissions": [
     "bookmarks"
   ],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*"
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://openrouter.ai/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.groq.com/*"
   ]
 }

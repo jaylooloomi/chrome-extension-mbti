@@ -1,271 +1,226 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { Send } from 'lucide-react';
+import { Share2, RotateCcw, Eye, EyeOff, Cpu } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
-import { MBTIResult } from '../utils/gemini';
+import { MBTIResult } from '../utils/providers';
 import { characterData } from '../data/characters';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Label } from './ui/label';
+import { PersonaRadar, RadarDatum } from './PersonaRadar';
+
+const pct = (v?: string): number => {
+  const n = parseFloat(String(v ?? '').replace('%', ''));
+  return Number.isNaN(n) ? 0 : Math.max(0, Math.min(100, Math.round(n)));
+};
 
 interface ResultCardProps {
   result: MBTIResult;
   onRetest: () => void;
   t: (key: string) => string;
+  source?: string;
 }
 
-export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t }) => {
-  const [keyInfoVisibility, setKeyInfoVisibility] = useState('unhide');
+export const ResultCard: React.FC<ResultCardProps> = ({ result, onRetest, t, source }) => {
+  const [showDetails, setShowDetails] = useState(true);
   const cardRef = React.useRef<HTMLDivElement>(null);
   const screenshotTargetRef = React.useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
   const lang = (i18n.language.split('-')[0] || 'en') as 'en' | 'zh';
-  const mbtiCode = result.mbti.toUpperCase();
+  const mbtiCode = (result.mbti || '').toUpperCase();
   const character = characterData[mbtiCode];
-  
-  // Logic for image: Use matched character image, or 'X' placeholder if none
-  const hasImage = character && character.image;
-  
-  // Logic for title: Standard Name / AI Title
-  const displayTitle = character 
-    ? `${character.name[lang] || character.name.en} / ${result.title}`
+
+  const hasImage = Boolean(character && character.image);
+  const displayTitle = character
+    ? `${character.name[lang] || character.name.en} · ${result.title}`
     : result.title;
 
-  // Logic for description: Standard Desc + AI Desc
-  // We use the character description from our data if available, then the AI one.
-  const descriptionSection = (
-    <div className="space-y-6">
-      {character && (
-         <p className="text-cyan-200/90 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-            "{character.description[lang] || character.description.en}"
-         </p>
-      )}
-      <p className="text-gray-300/90 leading-loose font-light text-justify text-base">
-        {result.description}
-      </p>
-    </div>
-  );
+  const categories: Array<{ key: string; percent?: string; items?: string[] }> = [
+    { key: 'food', percent: result.foodpercent, items: result.food },
+    { key: 'clothing', percent: result.clothingpercent, items: result.clothing },
+    { key: 'housing', percent: result.housingpercent, items: result.housing },
+    { key: 'travel', percent: result.travelpercent, items: result.travel },
+    { key: 'education', percent: result.educationpercent, items: result.education },
+    { key: 'entertainment', percent: result.entertainmentpercent, items: result.entertainment },
+    { key: 'money', percent: result.moneypercent, items: result.money },
+    { key: 'sex', percent: result.sexpercent, items: result.sex },
+    { key: 'pornstar', percent: result.pornstarpercent, items: result.pornstar },
+  ];
 
-  const renderCategorySection = (category: string, percent: string, items: string[]) => {
-    // If there are no items for a category, don't render anything for it.
-    if (!items || items.length === 0) return null;
-
-    return (
-      <div key={category} className="mb-4">
-        <h3 className="mb-3 text-lg font-bold text-white tracking-wide drop-shadow-md whitespace-nowrap">
-          {t(category)}
-          {percent ? `(${String(percent).replace('%', '')}%)` : ''}:
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {items.map((item, i) => (
-            <span key={i} className="bg-gray-800/81 text-gray-200 text-xs px-3 py-1 rounded-full shadow-sm hover:text-cyan-300 transition-colors cursor-default">
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const descriptionSectionAdult1 = (
-    <div className="w-full space-y-6 text-left">
-      <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-        "{t('favoriteThing')}"
-      </p>
-      <div>
-        {renderCategorySection('food', result.foodpercent, result.food)}
-        {renderCategorySection('clothing', result.clothingpercent, result.clothing)}
-        {renderCategorySection('housing', result.housingpercent, result.housing)}
-        {renderCategorySection('travel', result.travelpercent, result.travel)}
-        {renderCategorySection('education', result.educationpercent, result.education)}
-        {renderCategorySection('entertainment', result.entertainmentpercent, result.entertainment)}
-        {renderCategorySection('money', result.moneypercent, result.money)}
-        {renderCategorySection('sex', result.sexpercent, result.sex)}
-        {renderCategorySection('pornstar', result.pornstarpercent, result.pornstar)}
-      </div>
-    </div>
-  );
-
-  const descriptionSectionAdult2 = (
-    <div className="space-y-8">
-      {character && (
-        <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-        "{t('whoYouAre')}"
-      </p>
-      )}
-      <p className="text-gray-300/94 leading-loose font-light text-justify text-base">
-        {result.yourself}
-      </p>
-    </div>
-  );
-
-  const descriptionSectionAdult3 = (
-    <div className="space-y-10">
-      {character && (
-         <p className="text-cyan-200/92 font-medium text-lg italic border-l-4 border-cyan-500 pl-4">
-        "{t('couple')}"
-      </p>
-      )}
-      <p className="text-gray-300/96 leading-loose font-light text-justify text-base">
-        {result.couple}
-      </p>
-    </div>
-  );
+  const radarData: RadarDatum[] = categories.map((c) => ({ label: t(c.key), value: pct(c.percent) }));
 
   const handleShare = async () => {
-    if (!cardRef.current || !screenshotTargetRef.current) {
-      return;
-    }
+    if (!cardRef.current || !screenshotTargetRef.current) return;
 
     const nodeToCapture = cardRef.current;
     const nodeToStyle = screenshotTargetRef.current;
     const originalStyle = nodeToStyle.style.cssText;
-    
-    // Temporarily apply black background for screenshot, keeping the grid
-    nodeToStyle.style.backgroundColor = 'black';
+    nodeToStyle.style.backgroundColor = '#0a0a0f';
 
     try {
-      // Delay slightly to ensure styles are applied
-      await new Promise(resolve => setTimeout(resolve, 100));
-
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const dataUrl = await toPng(nodeToCapture, { cacheBust: true });
       const blob = await (await fetch(dataUrl)).blob();
-      
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          [blob.type]: blob,
-        }),
-      ]);
-
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
       toast.success(t('copysuccess'));
-
     } catch (error) {
       console.error('Error capturing or copying image:', error);
       toast.error('Failed to copy image.');
     } finally {
-      // Restore original styles
       nodeToStyle.style.cssText = originalStyle;
     }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       className="w-full"
       ref={cardRef}
     >
-      <div 
+      <div
         ref={screenshotTargetRef}
-        className="relative overflow-hidden rounded-2xl bg-gray-900/40 border border-cyan-500/30 shadow-[0_0_50px_rgba(0,255,255,0.1)]"
+        className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]"
       >
-        {/* Background Grid Effect - Subtle */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-        
-        <div className="p-8 md:p-10 flex flex-col items-center text-center relative z-10">
-          
-          {/* Avatar Section */}
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }}
+        <div className="relative z-10 flex flex-col items-center px-6 py-8 text-center">
+          {/* Avatar */}
+          <motion.div
+            initial={{ y: -12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-8 relative"
+            transition={{ delay: 0.15 }}
+            className="relative mb-6"
           >
-            <div className="w-56 h-56 rounded-full p-1 bg-gradient-to-b from-cyan-400 to-purple-600 shadow-[0_0_40px_rgba(6,182,212,0.4)] flex items-center justify-center">
-                <div className="w-full h-full rounded-full overflow-hidden border-4 border-black relative bg-black flex items-center justify-center">
-                    {hasImage ? (
-                        <>
-                            <img 
-                                src={character.image} 
-                                alt="Character" 
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-cyan-900/30 to-transparent mix-blend-overlay"></div>
-                        </>
-                    ) : (
-                        <span className="text-6xl font-black text-gray-700 select-none">X</span>
-                    )}
-                </div>
+            <div className="flex h-36 w-36 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 p-[3px]">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#0a0a0f]">
+                {hasImage ? (
+                  <img src={character!.image} alt="Character" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="select-none text-5xl font-black text-zinc-700">?</span>
+                )}
+              </div>
             </div>
-
-            {/* Type Label - ENLARGED per request & Fixed Layout */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black border-2 border-cyan-400 text-cyan-400 px-6 py-2 rounded-md font-mono text-xl font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)] tracking-widest z-20 whitespace-nowrap">
-              TYPE: {mbtiCode}
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-violet-400/40 bg-[#0a0a0f] px-4 py-1 font-mono text-sm font-bold tracking-widest text-violet-300 shadow-lg">
+              {mbtiCode || '----'}
             </div>
           </motion.div>
 
           {/* Title */}
-          <h2 className="mt-6 text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-purple-400 mb-6 uppercase tracking-tighter filter drop-shadow-[0_0_10px_rgba(0,255,255,0.3)] font-['Orbitron'] max-w-2xl leading-tight">
+          <h2 className="font-display mt-4 max-w-[18rem] bg-gradient-to-r from-violet-300 via-white to-fuchsia-300 bg-clip-text text-2xl font-bold leading-tight text-transparent">
             {displayTitle}
           </h2>
-          
+
           {/* Traits */}
-          <div className="flex gap-3 mb-8 justify-center flex-wrap">
-            {result.traits.map((trait, i) => (
-              <span key={i} className="bg-gray-800/80 border border-gray-600 text-gray-200 text-sm px-4 py-1.5 rounded-full shadow-sm hover:border-cyan-500/50 hover:text-cyan-300 transition-colors cursor-default">
-                {trait}
-              </span>
-            ))}
-          </div>
+          {result.traits?.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {result.traits.map((trait, i) => (
+                <span
+                  key={i}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-zinc-300"
+                >
+                  {trait}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Description */}
-          <div className="max-w-xl mb-10">
-             {descriptionSection}
+          <div className="mt-6 w-full space-y-4 text-left">
+            {character && (
+              <p className="border-l-2 border-violet-400/60 pl-3 text-sm italic text-violet-200/90">
+                “{character.description[lang] || character.description.en}”
+              </p>
+            )}
+            <p className="text-sm leading-relaxed text-zinc-300">{result.description}</p>
           </div>
 
-          {keyInfoVisibility === 'unhide' && (
-            <>
-              <div className="max-w-xl mb-10">
-                {descriptionSectionAdult1}
+          {/* Persona radar — always visible hero */}
+          <div className="mt-8 w-full">
+            <p className="mb-1 text-center text-xs font-semibold uppercase tracking-widest text-violet-300/80">
+              {t('favoriteThing')}
+            </p>
+            <PersonaRadar data={radarData} />
+          </div>
+
+          {/* Personality analysis — always visible (not affected by the keyword toggle) */}
+          <div className="mt-6 w-full space-y-4 text-left">
+            {result.yourself && (
+              <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-violet-300/80">
+                  {t('whoYouAre')}
+                </p>
+                <p className="text-sm leading-relaxed text-zinc-300">{result.yourself}</p>
               </div>
-              <div className="max-w-xl mb-10">
-                {descriptionSectionAdult2}
+            )}
+            {result.couple && (
+              <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-violet-300/80">
+                  {t('couple')}
+                </p>
+                <p className="text-sm leading-relaxed text-zinc-300">{result.couple}</p>
               </div>
-              <div className="max-w-xl mb-4">
-                {descriptionSectionAdult3}
-              </div>
-            </>
+            )}
+          </div>
+
+          {/* Keyword toggle — controls ONLY the keyword breakdown below */}
+          <button
+            onClick={() => setShowDetails((v) => !v)}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-zinc-300 transition-colors hover:border-violet-400/40 hover:text-violet-200"
+          >
+            {showDetails ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            {showDetails ? t('hideKeyInfo') : t('unhideKeyInfo')}
+          </button>
+
+          {/* Keyword breakdown — toggleable */}
+          {showDetails && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-6 w-full space-y-3 text-left"
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest text-violet-300/80">
+                {t('keywords')}
+              </p>
+              {categories
+                .filter((c) => c.items && c.items.length > 0)
+                .map((c) => (
+                  <div key={c.key} className="flex flex-wrap items-center gap-1.5">
+                    <span className="min-w-[2.75rem] text-sm font-semibold text-zinc-200">{t(c.key)}</span>
+                    <span className="mr-1 font-mono text-[11px] text-violet-300">{pct(c.percent)}%</span>
+                    {c.items!.map((item, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-zinc-300"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+            </motion.div>
           )}
-          
-          <div className="my-6 flex justify-center">
-            <RadioGroup
-                value={keyInfoVisibility}
-                onValueChange={setKeyInfoVisibility}
-                className="flex gap-6"
-            >
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="unhide" id="r-unhide" className="bg-gray-800 border-gray-600" />
-                    <Label htmlFor="r-unhide">{t('unhideKeyInfo')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hide" id="r-hide" className="bg-gray-800 border-gray-600" />
-                    <Label htmlFor="r-hide">{t('hideKeyInfo')}</Label>
-                </div>
-            </RadioGroup>
-          </div>
 
-          <div className="flex gap-4">
-            <button 
+          {/* Provenance — which provider/model produced this result */}
+          {source && (
+            <p className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500">
+              <Cpu className="h-3 w-3" /> {source}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="mt-6 flex w-full gap-3">
+            <button
               onClick={onRetest}
-              className="group relative px-10 py-3 bg-transparent overflow-hidden rounded-lg font-mono text-sm transition-all hover:bg-purple-900/20"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-zinc-200 transition-colors hover:bg-white/10"
             >
-               <div className="absolute inset-0 border border-purple-500/50 rounded-lg group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all"></div>
-               <span className="text-purple-300 group-hover:text-purple-200 flex items-center gap-2">
-                  &lt; {t('retest')} &gt;
-               </span>
+              <RotateCcw className="h-4 w-4" />
+              {t('retest')}
             </button>
-            <button 
+            <button
               onClick={handleShare}
-              className="group relative px-6 py-3 bg-cyan-900/20 overflow-hidden rounded-lg font-mono text-sm transition-all hover:bg-cyan-900/40 shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-colors hover:from-violet-400 hover:to-indigo-400"
             >
-               <div className="absolute inset-0 border border-cyan-500/50 rounded-lg"></div>
-               <span className="text-cyan-300 group-hover:text-cyan-200 flex items-center gap-2 filter drop-shadow-[0_0_8px_rgba(6,182,212,0.7)]">
-                  <Send className="w-4 h-4" />
-               </span>
+              <Share2 className="h-4 w-4" />
             </button>
           </div>
-
         </div>
       </div>
     </motion.div>

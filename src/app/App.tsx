@@ -2,279 +2,394 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'sonner';
-import { Bot, Key, ExternalLink, Globe, Shield, Download } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from './components/ui/radio-group';
-import { Label } from './components/ui/label';
+import {
+  Sparkles, Server, Cpu, Shield, ExternalLink, KeyRound,
+  Check, AlertTriangle, CloudDownload, Loader2,
+} from 'lucide-react';
 import { CyberButton } from './components/CyberButton';
 import { LoadingBar } from './components/LoadingBar';
 import { ResultCard } from './components/ResultCard';
-import { analyzeMBTI, MBTIResult } from './utils/gemini';
-import { downloadBookmarks, cleanBookmarkNode, downloadBookmarksAsText, formatBookmarksToText } from './utils/bookmarks';
 import { FloatingNav } from './components/FloatingNav';
 import { DonationModal } from './DonationModal';
+import {
+  analyzeMBTI, MBTIResult, PROVIDERS, getProvider, validateConfig,
+  chromeAiAvailability, createChromeSession, ProviderId,
+} from './utils/providers';
+import { cleanBookmarkNode } from './utils/bookmarks';
 import './i18n';
 
-// Assets
-// Replaced Figma assets with local/web assets to fix build errors
-const iconImage = "/icons/icon-Photoroom.png"; 
-// Replaced banner with high quality Unsplash image to solve transparency/quality issues
-const bannerImage = "/images/characters.png";
-const bgImage = "/images/photo-1535868463750-c78d9543614f.avif"; // Cyberpunk abstract bg
+const iconImage = '/icons/icon_radar_128.png';
+const bannerImage = '/images/characters.png';
+const STORAGE = 'mbti.config.v2';
+
+type ChromeStatus = 'checking' | 'available' | 'downloadable' | 'downloading' | 'unavailable' | 'unsupported';
+interface Store {
+  providerId: ProviderId;
+  keys: Record<string, string>;
+  urls: Record<string, string>;
+  models: Record<string, string>;
+}
+
+function loadStore(): { store: Store; hadProvider: boolean } {
+  const base: Store = { providerId: 'chrome-ai', keys: {}, urls: {}, models: {} };
+  try {
+    const raw = localStorage.getItem(STORAGE);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { store: { ...base, ...parsed }, hadProvider: !!parsed.providerId };
+    }
+  } catch {
+    /* ignore */
+  }
+  return { store: base, hadProvider: false };
+}
 
 function App() {
   const { t, i18n } = useTranslation();
-  const [apiKey, setApiKey] = useState('');
+  const initial = useRef(loadStore());
+  const [store, setStore] = useState<Store>(initial.current.store);
+  const [chromeStatus, setChromeStatus] = useState<ChromeStatus>('checking');
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<MBTIResult | null>(null);
+  const [resultSource, setResultSource] = useState('');
   const [showDonationModal, setShowDonationModal] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+  const lang = i18n.language.split('-')[0];
+
+  const providerId = store.providerId;
+  const preset = getProvider(providerId);
+  const apiKey = store.keys[providerId] ?? '';
+  const baseUrl = store.urls[providerId] ?? preset.baseUrl ?? '';
+  const model = store.models[providerId] ?? preset.defaultModel ?? '';
+  const chromeUsable = chromeStatus === 'available' || chromeStatus === 'downloadable' || chromeStatus === 'downloading';
+
+  const setProviderId = (id: ProviderId) => setStore((s) => ({ ...s, providerId: id }));
+  const setKey = (v: string) => setStore((s) => ({ ...s, keys: { ...s.keys, [providerId]: v } }));
+  const setUrl = (v: string) => setStore((s) => ({ ...s, urls: { ...s.urls, [providerId]: v } }));
+  const setModel = (v: string) => setStore((s) => ({ ...s, models: { ...s.models, [providerId]: v } }));
+
+  // Persist settings.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE, JSON.stringify(store));
+    } catch {
+      /* ignore */
+    }
+  }, [store]);
+
+  // Detect Chrome built-in AI; if unsupported and the user never picked a provider, fall back to Gemini.
+  useEffect(() => {
+    let alive = true;
+    chromeAiAvailability().then((status) => {
+      if (!alive) return;
+      setChromeStatus(status);
+      if (!initial.current.hadProvider && initial.current.store.providerId === 'chrome-ai'
+          && (status === 'unavailable' || status === 'unsupported')) {
+        setStore((s) => (s.providerId === 'chrome-ai' ? { ...s, providerId: 'gemini' } : s));
+      }
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // DEV-only result preview.
+  useEffect(() => {
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('demo')) {
+      import('./data/demoResult').then((m) => setResult(m.demoResult));
+    }
+  }, []);
 
   useEffect(() => {
-  if (result && resultRef.current) {
-    resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-     setTimeout(() => {
-      window.scrollBy(0, -30); // 向上滾動 10 像素以作為偏移
-    }, 500); // 5
-  }
-}, [result]);
-
-  const handleLanguageChange = (lang: string) => {
-    i18n.changeLanguage(lang);
-  };
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result]);
 
   const simulateProgress = () => {
     setProgress(0);
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + Math.random() * 10;
-      });
+      setProgress((prev) => (prev >= 90 ? 90 : prev + Math.random() * 10));
     }, 200);
     return interval;
   };
 
-  const getBookmarks = (t: (key: string) => string): Promise<chrome.bookmarks.BookmarkTreeNode[]> => {
-    return new Promise((resolve, reject) => {
-      if (chrome && chrome.bookmarks) {
-        chrome.bookmarks.getTree((bookmarkTreeNodes) => {
-          if (chrome.runtime.lastError) {
-            console.error("Error getting bookmarks:", chrome.runtime.lastError);
-            reject(new Error(t('bookmarkApiError')));
-          } else {
-            resolve(bookmarkTreeNodes);
-          }
+  const getBookmarks = (): Promise<chrome.bookmarks.BookmarkTreeNode[]> =>
+    new Promise((resolve, reject) => {
+      if (typeof chrome !== 'undefined' && chrome.bookmarks) {
+        chrome.bookmarks.getTree((nodes) => {
+          if (chrome.runtime.lastError) reject(new Error(t('bookmarkApiError')));
+          else resolve(nodes);
         });
+      } else if (import.meta.env.DEV) {
+        // Dev affordance: the bookmarks API only exists inside the packed extension,
+        // so the dev server uses a small sample tree to exercise providers end-to-end.
+        resolve([
+          {
+            id: '0', title: '', children: [
+              {
+                id: '1', title: 'Bookmarks Bar', children: [
+                  { id: '2', title: 'GitHub' }, { id: '3', title: 'Hacker News' }, { id: '4', title: 'arXiv' },
+                  { id: '5', title: 'Hugging Face' }, { id: '6', title: 'MDN Web Docs' }, { id: '7', title: 'Lobsters' },
+                ],
+              },
+            ],
+          },
+        ] as unknown as chrome.bookmarks.BookmarkTreeNode[]);
       } else {
-        console.error("chrome.bookmarks API is not available.");
         reject(new Error(t('bookmarkApiError')));
       }
     });
-  };
-
-  const handleDownloadBookmarks = async () => {
-    try {
-      const bookmarks = await getBookmarks(t);
-      downloadBookmarks(bookmarks);
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred while fetching bookmarks.");
-    }
-  };
 
   const handleAnalysis = async () => {
-    if (!apiKey) {
-      toast.error(t('Please enter a valid Gemini API Key'));
-      return;
+    const cfg = { providerId, baseUrl, apiKey, model };
+
+    if (preset.kind === 'chrome') {
+      if (!chromeUsable) {
+        toast.error(t('chromeUnavailable'));
+        return;
+      }
+    } else {
+      const err = validateConfig(cfg);
+      if (err) {
+        toast.error(t(err));
+        return;
+      }
     }
-    setIsLoading(true);
+
     setResult(null);
-    
+    setDownloadPct(null);
+    setIsLoading(true);
+
+    // Start the on-device session NOW, inside the click gesture — Chrome requires
+    // user activation to begin the first model download. Must happen before any await.
+    const onDl = (loaded: number) => setDownloadPct(Math.round((loaded || 0) * 100));
+    const chromeSession = preset.kind === 'chrome' ? createChromeSession(onDl) : undefined;
+    chromeSession?.catch(() => {}); // error surfaces through analyzeMBTI below
+
     const progressInterval = simulateProgress();
 
     try {
-      const bookmarks = await getBookmarks(t);
-      const cleanedBookmarks = bookmarks.map(cleanBookmarkNode);
-
-      // Create text version for download
-      //const bookmarksText = formatBookmarksToText(bookmarks);
-      
-      // Trigger the download of the text file
-      //const filename = downloadBookmarksAsText(bookmarksText);
-      //console.log(`Bookmarks for analysis saved to: ${filename} (in your Downloads folder)`);
-      
-      // Pass the cleaned JSON object to the analysis function
-      const analysisResult = await analyzeMBTI(apiKey, cleanedBookmarks, i18n.language);
-      
+      const bookmarks = await getBookmarks();
+      const cleaned = bookmarks.map(cleanBookmarkNode);
+      const analysis = await analyzeMBTI(cfg, cleaned, i18n.language, onDl, chromeSession);
+      const sourceName =
+        preset.kind === 'chrome'
+          ? `${t('provider_chrome-ai')} · Gemini Nano`
+          : `${t(`provider_${providerId}`)} · ${model || preset.defaultModel || ''}`;
       setProgress(100);
       setTimeout(() => {
-        setResult(analysisResult);
+        setResult(analysis);
+        setResultSource(t('poweredBy', { source: sourceName }));
         setIsLoading(false);
         clearInterval(progressInterval);
-      }, 800);
-
+      }, 600);
     } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+      toast.error(err?.message || 'An error occurred');
       setIsLoading(false);
       clearInterval(progressInterval);
     }
   };
 
+  const langButton = (code: string, label: string) => (
+    <button
+      onClick={() => i18n.changeLanguage(code)}
+      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        lang === code ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const inputBase =
+    'w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-9 pr-3 text-sm text-white placeholder-zinc-600 transition-all focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30';
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans selection:bg-cyan-500/30 selection:text-cyan-200 pt-8 pb-12 px-4 flex flex-col items-center relative overflow-x-auto">
-      <Toaster richColors theme="dark" />
+    <div className="relative min-h-screen w-full px-5 pb-10 pt-6 text-white">
+      <Toaster richColors theme="dark" position="top-center" />
       <FloatingNav />
-      {/* Background Image - Reduced overlay opacity to make background more visible (Bug 1 Fix) */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={bgImage} 
-          alt="Cyberpunk Background" 
-          className="w-full h-full object-cover opacity-80"
-        />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
+
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#0a0a0f]">
+        <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-violet-600/25 blur-3xl" />
+        <div className="absolute -right-16 top-1/2 h-72 w-72 rounded-full bg-fuchsia-600/15 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-indigo-600/15 blur-3xl" />
       </div>
 
-      <motion.div 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="w-full max-w-2xl bg-white-900/80 border border-white-700/50 backdrop-blur-xl rounded-2xl p-8 shadow-2xl relative z-10"
-      >
-        {/* Header */}
-        <div className="flex justify-end items-center mb-4">
-          <CyberButton onClick={handleDownloadBookmarks} variant="outline" className="text-sm hidden">
-            <Download className="w-4 h-4" />
-            {t('downloadBookmarks')}
-          </CyberButton>
-
-          <RadioGroup
-            value={i18n.language.split('-')[0]}
-            onValueChange={handleLanguageChange}
-            className="flex gap-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="en" id="r-en" className="bg-gray-800 border-gray-600" />
-              <Label htmlFor="r-en">English</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="zh" id="r-zh" className="bg-gray-800 border-gray-600" />
-              <Label htmlFor="r-zh">中文</Label>
-            </div>
-          </RadioGroup>
-        </div>
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg overflow-hidden shadow-lg border border-white/10">
-              <img src={iconImage} alt="Icon" className="w-full h-full object-cover" />
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide drop-shadow-md whitespace-nowrap">
-              {t('title')}
-            </h1>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 overflow-hidden rounded-xl border border-white/10 shadow-lg">
+            <img src={iconImage} alt="Icon" className="h-full w-full object-cover" />
           </div>
+          <h1 className="font-display text-lg font-bold leading-tight tracking-wide">{t('title')}</h1>
         </div>
-
-        {/* API Key Section */}
-        <div className="mb-6 space-y-2">
-          <label className="block text-sm font-medium text-gray-300 ml-1">
-            {t('apiKeyLabel')}
-          </label>
-          <div className="relative group" onClick={() => toast.success(t('tooltipApiKey'))}>
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Key className="h-5 w-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
-            </div>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="block w-full pl-10 pr-32 py-3 border border-gray-600 rounded-xl leading-5 bg-gray-800/80 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 sm:text-sm transition-all shadow-inner"
-              placeholder="AIzaSy..."
-            />
-            <a 
-              href="https://aistudio.google.com/app/apikey" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
-            >
-              {t('getKey')} <ExternalLink className="w-3 h-3 ml-1" />
-            </a>
-          </div>
+        <div className="inline-flex rounded-full border border-white/10 bg-white/5 p-0.5">
+          {langButton('en', 'EN')}
+          {langButton('zh', '中文')}
         </div>
+      </div>
 
-        {/* Banner Image */}
+      <AnimatePresence mode="wait">
         {!result && (
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mb-8 rounded-xl overflow-hidden shadow-lg border border-white/5 relative"
-            >
-                <img src={bannerImage} alt="Cyberpunk Team" className="w-full h-auto object-cover max-h-64" />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent"></div>
-            </motion.div>
+          <motion.div key="intro" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+            <p className="mb-5 text-sm leading-relaxed text-zinc-400">{t('subtitle')}</p>
+
+            {!isLoading && (
+              <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/10">
+                <img src={bannerImage} alt="MBTI personas" className="block h-auto w-full" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0a0a0f] to-transparent" />
+              </div>
+            )}
+
+            {!isLoading && (
+              <>
+                {/* Provider */}
+                <label className="mb-1.5 block text-xs font-medium text-zinc-400">{t('providerLabel')}</label>
+                <div className="relative mb-4">
+                  <select
+                    value={providerId}
+                    onChange={(e) => setProviderId(e.target.value as ProviderId)}
+                    className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-3 pr-9 text-sm text-white transition-all focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  >
+                    {PROVIDERS.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-[#12121a] text-white">
+                        {t(`provider_${p.id}`)}
+                      </option>
+                    ))}
+                  </select>
+                  <Cpu className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                </div>
+
+                {/* Chrome AI status */}
+                {preset.kind === 'chrome' && (
+                  <div className="mb-4 flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs">
+                    {chromeStatus === 'checking' && (
+                      <><Loader2 className="mt-0.5 h-3.5 w-3.5 animate-spin text-zinc-400" /><span className="text-zinc-400">{t('chromeChecking')}</span></>
+                    )}
+                    {chromeStatus === 'available' && (
+                      <><Check className="mt-0.5 h-3.5 w-3.5 text-emerald-400" /><span className="text-zinc-300">{t('chromeReady')}</span></>
+                    )}
+                    {(chromeStatus === 'downloadable' || chromeStatus === 'downloading') && (
+                      <><CloudDownload className="mt-0.5 h-3.5 w-3.5 text-violet-300" /><span className="text-zinc-300">{t('chromeDownload')}</span></>
+                    )}
+                    {(chromeStatus === 'unavailable' || chromeStatus === 'unsupported') && (
+                      <><AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-400" /><span className="text-zinc-300">{t('chromeUnavailable')}</span></>
+                    )}
+                  </div>
+                )}
+
+                {/* API key */}
+                {preset.needsKey && (
+                  <>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-400">{t('apiKeyLabel')}</label>
+                    <div className="group relative mb-4">
+                      <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-violet-400" />
+                      <input
+                        type="password"
+                        value={apiKey}
+                        onChange={(e) => setKey(e.target.value)}
+                        title={t('ollamaTooltip')}
+                        className={inputBase + ' pr-28'}
+                        placeholder={t('keyPlaceholder')}
+                      />
+                      {preset.keyUrl && (
+                        <a
+                          href={preset.keyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 text-xs font-medium text-violet-300 transition-colors hover:text-violet-200"
+                        >
+                          {t('getKey')} <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Base URL (Ollama / custom) */}
+                {preset.editableUrl && (
+                  <>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-400">{t('baseUrlLabel')}</label>
+                    <div className="group relative mb-4">
+                      <Server className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-violet-400" />
+                      <input
+                        value={baseUrl}
+                        onChange={(e) => setUrl(e.target.value)}
+                        className={inputBase}
+                        placeholder={preset.baseUrl || 'http://localhost:11434/v1'}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Model */}
+                {preset.kind === 'openai' && (
+                  <>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-400">{t('modelLabel')}</label>
+                    <div className="group relative mb-6">
+                      <Cpu className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-violet-400" />
+                      <input
+                        value={model}
+                        onChange={(e) => setModel(e.target.value)}
+                        className={inputBase}
+                        placeholder={preset.defaultModel || 'model name'}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <CyberButton onClick={handleAnalysis} variant="blue" fullWidth className="py-3.5 text-base">
+                  <Sparkles className="h-5 w-5" /> {t('aiButton')}
+                </CyberButton>
+              </>
+            )}
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Main Actions */}
-        {!result && !isLoading && (
-          <div className="space-y-4">
-            <CyberButton onClick={handleAnalysis} variant="blue" fullWidth className="py-4 text-lg shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-              <Bot className="w-6 h-6" /> {t('aiButton')}
-            </CyberButton>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="py-12 flex flex-col items-center justify-center space-y-6">
-            <div className="w-full max-w-md space-y-2">
-              <LoadingBar progress={progress} />
-              <p className="text-center text-cyan-400 font-mono text-sm animate-pulse">
-                {progress < 50 ? t('analyzing') : t('downloading')}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Result State */}
-        <AnimatePresence>
-          {result && (
-            <motion.div
-              ref={resultRef}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mt-10 w-full"
-            >
-              <ResultCard 
-                result={result} 
-                onRetest={() => setResult(null)}
-                t={t}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Privacy Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-700/50 flex items-start gap-3 text-xs text-gray-400">
-          <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <p>{t('privacy')}</p>
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center gap-4 py-10">
+          <LoadingBar progress={progress} />
+          <p className="animate-pulse text-center font-mono text-xs text-violet-300">
+            {downloadPct !== null
+              ? `${t('chromeDownloading')} ${downloadPct}%`
+              : progress < 50
+              ? t('downloading')
+              : t('analyzing')}
+          </p>
         </div>
-        
-        <div className="mt-4 text-center text-gray-500 text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity">
-          {t('footerAuth')}
-          <a className="mt-2">  </a>
-          <button 
-          onClick={() => setShowDonationModal(true)} 
-          className="text-center text-white-500 text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity"> 
-          {t('coffeeicon')} 
-          </button>
-        </div>
-      </motion.div>
+      )}
 
-      <DonationModal 
-        isOpen={showDonationModal} 
-        onClose={() => setShowDonationModal(false)} 
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            ref={resultRef}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            className="w-full"
+          >
+            <ResultCard result={result} onRetest={() => setResult(null)} t={t} source={resultSource} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mt-8 flex items-start gap-2.5 border-t border-white/10 pt-5 text-xs text-zinc-500">
+        <Shield className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+        <p className="leading-relaxed">{t('privacy')}</p>
+      </div>
+
+      <div className="mt-4 text-center font-mono text-[10px] text-zinc-600">
+        {t('footerAuth')}
+        <button onClick={() => setShowDonationModal(true)} className="ml-2 transition-colors hover:text-violet-300">
+          {t('coffeeicon')}
+        </button>
+      </div>
+
+      <DonationModal
+        isOpen={showDonationModal}
+        onClose={() => setShowDonationModal(false)}
         onDonate={() => {
-          console.log('Donation initiated!');
           window.open('https://buymeacoffee.com/arthurwang', '_blank');
           setShowDonationModal(false);
         }}
